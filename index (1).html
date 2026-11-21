@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+(function(){
+  function show(m){
+    var d=document.getElementById("errbar");
+    if(!d){d=document.createElement("div");d.id="errbar";d.setAttribute("role","alert");
+      d.style.cssText="position:fixed;left:0;right:0;bottom:0;z-index:99;background:#fff;color:#000;padding:10px 12px;font:14px/1.3 monospace;max-height:40vh;overflow:auto;white-space:pre-wrap";
+      d.onclick=function(){d.parentNode&&d.parentNode.removeChild(d)};
+      (document.body||document.documentElement).appendChild(d);}
+    d.textContent+=m+"\n";
+  }
+  window.addEventListener("error",function(e){show("Error: "+e.message+" (line "+e.lineno+")")});
+  window.addEventListener("unhandledrejection",function(e){show("Promise error: "+((e.reason&&e.reason.message)||e.reason))});
+  window.addEventListener("load",function(){setTimeout(function(){if(!window.__sheetReady)show("The sheet script did not finish starting. Please send a screenshot of this message.")},1500)});
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Shadowdark Character Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#000;--panel:#0b0b0b;--ink:#ededed;--mute:#9b9b9b;--line:#e4e4e4;--dim:#4a4a4a;
+--gothic:"UnifrakturCook","Old English Text MT","Luminari",Georgia,serif;
+--body:"IM Fell English",Georgia,"Times New Roman",serif;
+--top:env(safe-area-inset-top,0px);--bot:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.35 var(--body);touch-action:manipulation;
+padding:calc(var(--top) + 56px) 0 calc(var(--bot) + 76px)}
+[hidden]{display:none!important}
+button,input,textarea{font-family:inherit}
+button{-webkit-appearance:none;appearance:none;border-radius:0;-webkit-touch-callout:none}
+
+/* top bar */
+.bar{position:fixed;top:0;left:0;right:0;z-index:20;background:#000;border-bottom:1px solid var(--line);
+padding:calc(var(--top) + 6px) max(10px,env(safe-area-inset-right)) 6px max(10px,env(safe-area-inset-left));display:flex;gap:8px;align-items:center}
+.bar .logo{font:26px var(--gothic);margin-right:auto;letter-spacing:.02em}
+.btn{min-height:44px;min-width:44px;padding:0 14px;background:transparent;color:var(--ink);border:1px solid var(--line);
+font:16px var(--body);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;border-radius:0}
+.btn:active{background:var(--ink);color:#000}
+.btn:focus-visible,summary:focus-visible,input:focus-visible,textarea:focus-visible,.tabs button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.more{position:relative}
+.more summary{list-style:none}.more summary::-webkit-details-marker{display:none}
+.menu{position:absolute;right:0;top:50px;background:#000;border:1px solid var(--line);outline:1px solid var(--line);outline-offset:-5px;padding:10px;display:grid;gap:8px;min-width:170px}
+
+/* tabs (bottom nav) */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#000;border-top:1px solid var(--line);display:flex;
+padding:0 env(safe-area-inset-right) var(--bot) env(safe-area-inset-left)}
+.tabs button{flex:1;min-height:56px;background:transparent;color:var(--mute);border:0;border-right:1px solid var(--dim);font:14px var(--body);padding:0 2px;cursor:pointer}
+.tabs button:last-child{border-right:0}
+@media(max-width:380px){.tabs button{font-size:12.5px}}
+.tabs button[aria-selected=true]{background:var(--ink);color:#000;font-weight:700}
+
+/* layout */
+main{max-width:1000px;margin:0 auto;padding:12px max(12px,env(safe-area-inset-left))}
+.tab{display:grid;gap:14px;grid-template-columns:1fr;align-items:start}
+@media(min-width:760px){.tab.two{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}}
+.panel{background:var(--panel);border:1px solid var(--line);outline:1px solid var(--line);outline-offset:-5px;padding:16px 16px 14px}
+h2{margin:0 0 10px;font:22px var(--gothic);display:flex;justify-content:space-between;align-items:center;gap:8px;
+padding-bottom:6px;border-bottom:3px double var(--line);letter-spacing:.02em}
+h2 .btn{min-height:36px;min-width:36px;padding:0 12px;font-size:15px}
+.hint{font-size:14px;color:var(--mute);margin:6px 0 0}
+
+/* fields */
+label.f{display:block;font-size:14px;color:var(--mute)}
+input,textarea{width:100%;font-size:16px;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--mute);
+border-radius:0;padding:8px 2px;min-height:44px;-webkit-appearance:none;appearance:none}
+textarea{border:1px solid var(--dim);background:#050505;padding:8px;resize:vertical;line-height:1.4;min-height:44px}
+input::placeholder,textarea::placeholder{color:#666}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ident{display:grid;gap:10px 14px;grid-template-columns:1fr 1fr}
+@media(min-width:760px){.ident{grid-template-columns:repeat(3,1fr)}}
+.ident .full{grid-column:1/-1}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{border:1px solid var(--line);display:flex;align-items:center;gap:4px;padding:2px 8px;min-height:56px}
+.stat b{font:20px var(--gothic);width:44px}
+.stat input{text-align:center;font-size:24px;border:0;width:100%;min-width:0;padding:4px 0}
+.stat .mod{font-size:20px;font-weight:700;min-width:36px;text-align:right}
+.vit{display:grid;grid-template-columns:3fr 2fr;gap:10px;margin-top:10px}
+.vit .sep{color:var(--mute)}
+
+.row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+.row .n{width:26px;font-size:14px;color:var(--mute);flex:none}
+.row input.sl{width:64px;flex:none;text-align:center;padding:8px 0}
+.gh{display:flex;gap:6px;font-size:14px;color:var(--mute);margin-bottom:2px}
+.gh span:first-child{flex:1;padding-left:32px}.gh span:last-child{width:64px;text-align:center}
+.x{flex:none;background:transparent;border:1px solid var(--dim);color:var(--ink);width:44px;height:44px;font-size:22px;cursor:pointer;border-radius:0}
+.x:active,.x.arm{background:var(--ink);color:#000;font-weight:700}
+.item{display:grid;gap:6px;margin-bottom:10px;align-items:center}
+.attack{grid-template-columns:1fr 1fr 44px;grid-template-areas:"name name x" "bonus dmg dmg"}
+.attack [data-k=name]{grid-area:name}.attack [data-k=bonus]{grid-area:bonus}.attack [data-k=dmg]{grid-area:dmg}.attack .x{grid-area:x}
+.spell{grid-template-columns:44px 1fr 1fr 44px;grid-template-areas:"tg name name x" "tier range dur dur" "desc desc desc desc";
+padding-bottom:10px;border-bottom:1px dotted var(--dim)}
+.spell [data-k=name]{grid-area:name}.spell [data-k=tier]{grid-area:tier;text-align:center;padding:8px 0}
+.spell [data-k=range]{grid-area:range}.spell [data-k=duration]{grid-area:dur}
+.spell .tg{grid-area:tg}.spell .x{grid-area:x}.spell .desc{grid-area:desc}
+.tg{width:44px;height:44px;background:transparent;border:1px solid var(--dim);color:var(--ink);font-size:18px;cursor:pointer;border-radius:0}
+.boon{grid-template-columns:1fr 44px}
+.talent{grid-template-columns:1fr 44px}
+.lang{grid-template-columns:1fr 44px}
+.coins{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.cap{margin:0 0 6px}.over{font-weight:700;text-decoration:underline}
+.story textarea{min-height:120px}.story.big textarea{min-height:320px}
+.story{margin-bottom:12px}
+.pwrap{max-width:520px;margin:0 auto 12px}
+.portrait{border:1px solid var(--line);width:100%;margin:0 auto;background:#050505;color:var(--mute);text-align:center;overflow:hidden}
+.portrait.empty{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;padding:8px}
+.portrait img{width:100%;height:auto;display:block}
+.pbtns{display:flex;gap:10px;justify-content:center}
+
+.btn.on{background:var(--ink);color:#000;font-weight:700}
+.mtools{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+#mapc{display:block;width:100%;height:62vh;height:62dvh;-webkit-touch-callout:none;min-height:320px;max-height:640px;background:#080808;border:1px solid var(--line);touch-action:none;cursor:crosshair;-webkit-user-select:none;user-select:none}
+#mstat{margin:0 0 8px}
+select{width:100%;min-height:44px;font-size:16px;color:var(--ink);background:#050505;border:1px solid var(--dim);border-radius:0;padding:0 6px;font-family:inherit}
+input[type=color]{-webkit-appearance:auto;appearance:auto;height:44px;padding:2px;border:1px solid var(--dim);background:#050505}
+.lg{display:grid;grid-template-columns:44px 1fr 1fr 44px;grid-template-areas:"sw name name x" "kind kind val val";gap:6px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px dotted var(--dim)}
+.lg .sw{grid-area:sw;width:44px;height:44px;border:1px solid var(--line);font:bold 22px var(--body);cursor:pointer;border-radius:0;padding:0}
+.lg.on .sw{outline:3px solid #fff;outline-offset:2px}
+.lg .nm{grid-area:name}.lg .x{grid-area:x}.lg select{grid-area:kind}.lg .val{grid-area:val}
+.lg input.val[type=text]{text-align:center;font-size:22px}
+#modal,#lib{cursor:pointer;position:fixed;inset:0;z-index:40;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:16px}
+.mbox{cursor:auto;background:var(--panel);border:1px solid var(--line);outline:1px solid var(--line);outline-offset:-5px;padding:18px;width:min(100%,540px)}
+.libr{display:flex;gap:6px;margin-bottom:8px}.libr .btn:first-child{flex:1;justify-content:flex-start;text-align:left}
+#mtext{height:40vh;font-size:16px}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--bot) + 70px);background:var(--ink);color:#000;padding:8px 16px;
+z-index:30;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+
+@media print{
+body{background:#fff;color:#000;padding:0;font-size:12pt}
+.mtools,#mstat,.bar,.tabs,.pbtns,.x,.tg,h2 .btn,#toast{display:none!important}
+.tab[hidden]{display:grid!important}
+.tab{margin-bottom:14px}
+#mapc{height:360px}
+.panel{background:#fff;border-color:#000;outline-color:#000;break-inside:avoid}
+h2,.stat,.stat input,input,textarea{color:#000;border-color:#000}
+textarea{background:#fff}label.f,.hint,.row .n{color:#333}
+}
+</style>
+</head>
+<body>
+<noscript><div style="background:#fff;color:#000;padding:12px;font:16px Georgia,serif">JavaScript is off, or this viewer does not run scripts. Open this page in Safari or Chrome from its web address.</div></noscript>
+<header class="bar">
+  <span class="logo">Shadowdark</span>
+  <button class="btn" id="save">Save</button>
+  <label class="btn" id="loadlbl">Load<input id="load" type="file" accept=".json,application/json,text/plain" hidden></label>
+  <details class="more" id="more">
+    <summary class="btn" aria-label="More actions">⋯</summary>
+    <div class="menu">
+      <button class="btn" id="saved">Saved characters</button>
+      <button class="btn" id="dl">Download file</button>
+      <button class="btn" id="copy">Copy JSON</button>
+      <button class="btn" id="paste">Paste JSON</button>
+      <button class="btn" id="print">Print</button>
+      <button class="btn" id="clear">New sheet</button>
+    </div>
+  </details>
+</header>
+
+<main>
+<!-- CHARACTER -->
+<section class="tab two" id="tab-char" role="tabpanel">
+  <div class="panel wide">
+    <h2>Identity</h2>
+    <div class="ident">
+      <label class="f full">Name<input data-f="name" autocomplete="off" enterkeyhint="next"></label>
+      <label class="f">Ancestry<input data-f="ancestry" autocomplete="off"></label>
+      <label class="f">Class<input data-f="class" autocomplete="off"></label>
+      <label class="f">Title<input data-f="title" autocomplete="off"></label>
+      <label class="f">Alignment<input data-f="alignment" autocomplete="off"></label>
+      <label class="f">Background<input data-f="background" autocomplete="off"></label>
+      <label class="f">Deity<input data-f="deity" autocomplete="off"></label>
+      <label class="f">Level<input data-f="level" type="number" inputmode="numeric" min="0"></label>
+      <label class="f">XP<input data-f="xp" type="number" inputmode="numeric" min="0"></label>
+      <label class="f">XP to next level<input data-f="xpnext" type="number" inputmode="numeric" min="0"></label>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Abilities</h2>
+    <div class="stats" id="stats"></div>
+    <div class="vit">
+      <div class="stat"><b>HP</b><input data-f="hp" type="number" inputmode="numeric" aria-label="Current HP"><span class="sep">/</span><input data-f="hpmax" type="number" inputmode="numeric" aria-label="Max HP" placeholder="max"></div>
+      <div class="stat"><b>AC</b><input data-f="ac" type="number" inputmode="numeric" aria-label="Armor class"></div>
+    </div>
+    <p class="hint">Modifiers calculate from scores.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Attacks <button class="btn" data-add="attacks">+ Add</button></h2>
+    <div id="attacks"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Languages <button class="btn" data-add="languages">+ Add</button></h2>
+    <div id="languages"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Coins</h2>
+    <div class="coins">
+      <label class="f">GP<input data-f="gp" type="number" inputmode="numeric"></label>
+      <label class="f">SP<input data-f="sp" type="number" inputmode="numeric"></label>
+      <label class="f">CP<input data-f="cp" type="number" inputmode="numeric"></label>
+    </div>
+  </div>
+</section>
+
+<!-- POWERS -->
+<section class="tab" id="tab-powers" role="tabpanel" hidden>
+  <div class="panel">
+    <h2>Talents <button class="btn" data-add="talents">+ Add</button></h2>
+    <div id="talents"></div>
+  </div>
+  <div class="panel">
+    <h2>Spells <button class="btn" data-add="spells">+ Add</button></h2>
+    <div id="spells"></div>
+  </div>
+  <div class="panel">
+    <h2>Patron boons <button class="btn" data-add="boons">+ Add</button></h2>
+    <div id="boons"></div>
+  </div>
+</section>
+
+<!-- GEAR -->
+<section class="tab two" id="tab-gear" role="tabpanel" hidden>
+  <div class="panel">
+    <h2>Gear</h2>
+    <p class="cap">Slots used <span id="used">0</span> of <input id="maxslots" data-f="maxslots" type="number" inputmode="numeric" style="width:64px;display:inline-block;text-align:center" aria-label="Max gear slots"> <span id="slotwarn"></span></p>
+    <p class="hint" style="margin-bottom:10px">Leave Slots blank for 1; enter 0 for very light items. Max defaults to STR (minimum 10), plus CON modifier for Fighters. Edit to override.</p>
+    <div class="gh"><span>Item</span><span>Slots</span></div>
+    <div id="gear"></div>
+  </div>
+  <div>
+    <div class="panel" style="margin-bottom:14px">
+      <h2>Free to carry</h2>
+      <div id="free"></div>
+    </div>
+    <div class="panel">
+      <h2>Notes</h2>
+      <textarea data-f="notes" rows="6" aria-label="Notes"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- BACKSTORY -->
+<section class="tab" id="tab-story" role="tabpanel" hidden>
+  <div class="panel">
+    <h2>Portrait</h2>
+    <div class="pwrap"><div class="portrait empty"><img id="pimg" alt="Character portrait" hidden><span id="pempty">No portrait yet</span></div></div>
+    <div class="pbtns">
+      <label class="btn" id="pupl">Upload portrait<input id="pfile" type="file" accept="image/*" hidden></label>
+      <button class="btn" id="prem" type="button" hidden>Remove</button>
+    </div>
+  </div>
+  <div class="panel">
+    <h2>Backstory</h2>
+    <div class="story big"><textarea data-f="story" rows="12" placeholder="Where did you come from, and what did you lose?" aria-label="Backstory"></textarea></div>
+    <label class="f story">Appearance<textarea data-f="appearance" rows="3"></textarea></label>
+    <label class="f story">Personality and quirks<textarea data-f="personality" rows="3"></textarea></label>
+    <label class="f story">Allies and enemies<textarea data-f="allies" rows="3"></textarea></label>
+    <label class="f story" style="margin-bottom:0">Goals and bonds<textarea data-f="goals" rows="3"></textarea></label>
+  </div>
+</section>
+<!-- MAP -->
+<section class="tab" id="tab-map" role="tabpanel" hidden>
+  <div class="panel">
+    <h2>Map</h2>
+    <div class="mtools">
+      <button class="btn on" type="button" data-tool="paint" aria-pressed="true">Paint</button>
+      <button class="btn" type="button" data-tool="pan" aria-pressed="false">Pan</button>
+      <button class="btn" type="button" data-tool="erase" aria-pressed="false">Erase</button>
+      <button class="btn" type="button" id="mundo">Undo</button>
+      <button class="btn" type="button" id="mzin" aria-label="Zoom in">+</button>
+      <button class="btn" type="button" id="mzout" aria-label="Zoom out">−</button>
+      <button class="btn" type="button" id="mhome">Centre</button>
+    </div>
+    <p class="hint" id="mstat"></p>
+    <canvas id="mapc" aria-label="Hex map"></canvas>
+    <p class="hint">Paint: tap or drag over hexes. Pan: drag to move. Pinch or scroll to zoom. On desktop, right-drag also pans. A hex holds one colour and one symbol, so paint terrain first, then add a symbol on top. Changing a legend entry doesn't alter hexes already painted.</p>
+  </div>
+  <div class="panel">
+    <h2>Legend <button class="btn" type="button" id="lgadd">+ Add</button></h2>
+    <div id="legend"></div>
+  </div>
+</section>
+</main>
+
+<nav class="tabs" role="tablist" aria-label="Sheet sections">
+  <button role="tab" data-tab="char" aria-selected="true">Character</button>
+  <button role="tab" data-tab="powers" aria-selected="false">Powers</button>
+  <button role="tab" data-tab="gear" aria-selected="false">Gear</button>
+  <button role="tab" data-tab="story" aria-selected="false">Backstory</button>
+  <button role="tab" data-tab="map" aria-selected="false">Map</button>
+</nav>
+<div id="modal" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+  <h2 id="mtitle"></h2><textarea id="mtext" rows="10" aria-label="JSON"></textarea>
+  <div class="pbtns" style="margin-top:12px"><button class="btn" id="mok" type="button">Load</button><button class="btn" id="mclose" type="button">Close</button></div>
+</div></div>
+<div id="lib" hidden><div class="mbox" role="dialog" aria-modal="true" aria-labelledby="libt">
+  <h2 id="libt">Saved characters</h2><div id="liblist"></div>
+  <div class="pbtns" style="margin-top:12px"><button class="btn" id="libclose" type="button">Close</button></div>
+</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const ABIL=["STR","DEX","CON","INT","WIS","CHA"];
+const KEY="shadowdark-sheet-v2";
+const $=s=>document.querySelector(s);
+const num=v=>{const n=parseInt(v);return isNaN(n)?0:n};
+const mod=v=>{if(v===""||isNaN(parseInt(v)))return"";const m=Math.floor((parseInt(v)-10)/2);return(m>=0?"+":"")+m};
+let maxManual=false,tt,portrait="";
+function setPortrait(u){
+  portrait=u||"";
+  const i=$("#pimg");if(portrait)i.src=portrait;else i.removeAttribute("src");
+  i.hidden=!portrait;$("#pempty").hidden=!!portrait;$("#prem").hidden=!portrait;$(".portrait").classList.toggle("empty",!portrait);
+}
+function toast(t,ms){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(tt);tt=setTimeout(()=>e.classList.remove("on"),ms||1800)}
+
+const LISTS={
+  attacks:{cls:"attack",f:[["name","Weapon"],["bonus","Bonus"],["dmg","Damage / notes"]],init:3},
+  languages:{cls:"lang",f:[["name","Language"]],init:2},
+  talents:{cls:"talent",f:[["text","Talent","ta"]],init:3},
+  spells:{cls:"spell",f:[["name","Spell name"],["tier","Tier"],["range","Range"],["duration","Duration"],["desc","Spell description","desc"]],init:2},
+  boons:{cls:"boon",f:[["text","Effect","ta"]],init:2}
+};
+
+const NOUN={attacks:"attack",languages:"language",talents:"talent",spells:"spell",boons:"patron boon"};
+// auto-grow list textareas; dragging the corner handle switches that box to manual sizing
+function fit(t){
+  if(t._m||t.offsetParent===null)return;
+  // height differs from what auto-fit last set => the person dragged the handle; leave it alone
+  if(t._h&&Math.abs(t.offsetHeight-t._h)>3){t._m=true;return}
+  t.style.height="auto";const h=t.scrollHeight+2;t.style.height=h+"px";t._h=h;
+}
+function fitAll(){document.querySelectorAll(".item textarea").forEach(fit)}
+
+function addRow(list,vals={}){
+  const def=LISTS[list],el=document.createElement("div");
+  el.className="item "+def.cls;el.dataset.row=list;
+  let tg=null,desc=null;
+  if(def.f.some(x=>x[2]==="desc")){
+    tg=document.createElement("button");tg.type="button";tg.className="tg";el.appendChild(tg);
+  }
+  def.f.forEach(([k,ph,t])=>{
+    const i=document.createElement(t?"textarea":"input");
+    i.dataset.k=k;i.placeholder=ph;i.setAttribute("aria-label",ph);i.value=vals[k]||"";
+    if(t)i.rows=t==="desc"?4:2;
+    if(k==="tier")i.setAttribute("inputmode","numeric");
+    i.addEventListener("input",()=>{save();if(t)fit(i)});
+    if(t){i.addEventListener("pointerup",()=>{if(Math.abs(i.offsetHeight-(i._h||0))>3)i._m=true})}
+    if(t==="desc"){
+      i.classList.add("desc");i.hidden=!vals[k];desc=i;
+      const sync=()=>{tg.textContent=i.hidden?"▸":"▾";tg.setAttribute("aria-expanded",String(!i.hidden));tg.setAttribute("aria-label",i.hidden?"Show description":"Hide description")};
+      tg.onclick=()=>{i.hidden=!i.hidden;sync();if(!i.hidden){fit(i);i.focus()}};sync();
+    }else el.appendChild(i);
+  });
+  const x=document.createElement("button");x.type="button";x.className="x";x.textContent="×";x.setAttribute("aria-label","Remove");
+  let armT;
+  x.onclick=()=>{
+    if(x.classList.contains("arm")){clearTimeout(armT);el.remove();save();toast("Deleted");return}
+    x.classList.add("arm");x.textContent="✓";x.setAttribute("aria-label","Confirm delete");
+    toast("Tap ✓ again to delete this "+NOUN[list],2500);
+    armT=setTimeout(()=>{x.classList.remove("arm");x.textContent="×";x.setAttribute("aria-label","Remove")},2500);
+  };
+  el.appendChild(x);
+  if(desc)el.appendChild(desc);
+  $("#"+list).appendChild(el);
+  el.querySelectorAll("textarea").forEach(fit);
+}
+
+ABIL.forEach(a=>{
+  const d=document.createElement("div");d.className="stat";
+  d.innerHTML=`<b>${a}</b><input type="number" inputmode="numeric" data-f="${a}" aria-label="${a} score"><span class="mod" id="m${a}"></span>`;
+  $("#stats").appendChild(d);
+});
+function slots(id,n,pre,sl){
+  for(let i=1;i<=n;i++){
+    const r=document.createElement("div");r.className="row";
+    r.innerHTML=`<span class="n">${i}.</span><input data-f="${pre}${i}" aria-label="${pre} item ${i}" autocomplete="off">`+
+      (sl?`<input class="sl" data-f="${pre}${i}_s" type="number" inputmode="numeric" min="0" max="9" placeholder="1" aria-label="Slots taken by item ${i}">`:"");
+    $("#"+id).appendChild(r);
+  }
+}
+slots("gear",20,"gear",true);slots("free",3,"free");
+
+function autoMax(){
+  const cls=($("[data-f=class]").value||"").toLowerCase();
+  let m=Math.max(10,num($("[data-f=STR]").value));
+  if(cls.includes("fighter"))m+=Math.max(0,Math.floor((num($("[data-f=CON]").value)-10)/2));
+  return m;
+}
+function recalc(){
+  ABIL.forEach(a=>{$("#m"+a).textContent=mod($("[data-f="+a+"]").value)});
+  if(!maxManual)$("#maxslots").value=autoMax();
+  let used=0;for(let i=1;i<=20;i++){
+    if(!$("[data-f=gear"+i+"]").value.trim())continue;
+    const v=$("[data-f=gear"+i+"_s]").value;used+=v===""?1:Math.max(0,num(v));
+  }
+  $("#used").textContent=used;
+  const over=used>num($("#maxslots").value);
+  $("#used").className=over?"over":"";$("#slotwarn").textContent=over?"Overencumbered":"";
+}
+function gather(){
+  const d={fields:{},lists:{}};
+  document.querySelectorAll("[data-f]").forEach(e=>d.fields[e.dataset.f]=e.value);
+  Object.keys(LISTS).forEach(l=>{
+    d.lists[l]=[...document.querySelectorAll(`[data-row="${l}"]`)].map(r=>{
+      const o={};r.querySelectorAll("[data-k]").forEach(i=>o[i.dataset.k]=i.value);return o});
+  });
+  return{game:"Shadowdark",version:2,portrait,map:{legend:MAP.legend,hexes:MAP.hexes,view:MAP.view},...d};
+}
+function apply(d){
+  const f=(d&&d.fields)||{},ls=(d&&d.lists)||{};
+  document.querySelectorAll("[data-f]").forEach(e=>e.value=(f[e.dataset.f]==null?"":f[e.dataset.f]));
+  Object.keys(LISTS).forEach(l=>{
+    $("#"+l).innerHTML="";
+    const rows=ls[l];
+    if(rows&&rows.length)rows.forEach(v=>addRow(l,v));
+    else if(!d||!d.lists)for(let i=0;i<LISTS[l].init;i++)addRow(l);
+  });
+  maxManual=!!f.maxslots&&f.maxslots!==String(autoMax());
+  setMap(d&&d.map);
+  setPortrait(d&&typeof d.portrait==="string"&&d.portrait.startsWith("data:image/")?d.portrait:"");
+  recalc();fitAll();
+}
+function save(){
+  recalc();
+  try{localStorage.setItem(KEY,JSON.stringify(gather()))}catch(e){}
+}
+
+document.querySelectorAll("[data-f]").forEach(e=>e.addEventListener("input",()=>{if(e.id==="maxslots")maxManual=true;save()}));
+document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{addRow(b.dataset.add);save()});
+
+// tabs
+document.querySelectorAll(".tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tabs button").forEach(x=>x.setAttribute("aria-selected",String(x===b)));
+  document.querySelectorAll(".tab").forEach(t=>t.hidden=t.id!=="tab-"+b.dataset.tab);
+  window.scrollTo(0,0);fitAll();if(b.dataset.tab==="map")mapResize();
+});
+
+// portrait
+$("#pfile").onchange=e=>{
+  const file=e.target.files[0];e.target.value="";if(!file)return;
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+    const M=800,sc=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement("canvas");
+    c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+    const g=c.getContext("2d");g.fillStyle="#111";g.fillRect(0,0,c.width,c.height);g.drawImage(img,0,0,c.width,c.height);
+    URL.revokeObjectURL(url);setPortrait(c.toDataURL("image/jpeg",.85));save();toast("Portrait added");
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);toast("Couldn't read that image",2500)};
+  img.src=url;
+};
+$("#prem").onclick=()=>{setPortrait("");save()};
+
+// in-page dialog (browser confirm/prompt/alert can be blocked in some viewers)
+function openModal(title,text,okLabel,okFn,readonly){
+  $("#mtitle").textContent=title;const t=$("#mtext");t.value=text;t.readOnly=!!readonly;
+  const ok=$("#mok");ok.hidden=!okLabel;if(okLabel)ok.textContent=okLabel;ok.onclick=okFn;
+  $("#modal").hidden=false;t.focus();if(readonly){t.select();try{t.setSelectionRange(0,t.value.length)}catch(e){}}
+}
+const closeModal=()=>$("#modal").hidden=true;
+$("#mclose").onclick=closeModal;
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal")closeModal()});
+
+// file actions
+const closeMenu=()=>$("#more").removeAttribute("open");
+// Saves overwrite by character name: always in the browser library; also to a file
+// (overwritten in place where the browser allows it, otherwise downloaded).
+const KLIB="shadowdark-library-v1";
+const getLib=()=>{try{return JSON.parse(localStorage.getItem(KLIB))||{}}catch(e){return{}}};
+let fh=null,fhName="";
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function snapshot(){
+  const d=gather(),name=(d.fields.name||"").trim()||"character";
+  const fn=name.replace(/[\\\/:*?"<>|\u0000-\u001f]+/g,"_").trim()||"character";
+  return{d,name,fn,json:JSON.stringify(d,null,2)};
+}
+function toLib(d,name){try{const l=getLib();l[name]=d;localStorage.setItem(KLIB,JSON.stringify(l));return true}catch(e){return false}}
+function download(fn,json){
+  const url=URL.createObjectURL(new Blob([json],{type:"application/json"})),a=document.createElement("a");
+  a.href=url;a.download=fn+".json";document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+$("#save").onclick=async()=>{
+  const{d,name,fn,json}=snapshot(),inLib=toLib(d,name);
+  // iPhone/iPad: the share sheet's "Save to Files" can replace an existing file of the same name
+  if(isIOS&&navigator.share&&navigator.canShare){
+    try{
+      const f=new File([json],fn+".json",{type:"application/json"});
+      if(navigator.canShare({files:[f]})){await navigator.share({files:[f]});toast("Saved "+fn+".json");return}
+    }catch(e){if(e&&e.name==="AbortError"){toast(inLib?"Saved in browser only":"Not saved");return}}
+  }
+  if(window.showSaveFilePicker){
+    try{
+      if(!fh||fhName!==fn){fh=await window.showSaveFilePicker({suggestedName:fn+".json",types:[{description:"Sheet JSON",accept:{"application/json":[".json"]}}]});fhName=fn}
+      const w=await fh.createWritable();await w.write(json);await w.close();
+      toast("Saved "+fn+".json");return;
+    }catch(e){fh=null;if(e&&e.name==="AbortError"){toast(inLib?"Saved in browser only":"Not saved");return}}
+  }
+  download(fn,json);
+  toast(inLib?"Saved "+name+" (browser + file)":"Downloaded "+fn+".json",2200);
+};
+$("#dl").onclick=()=>{closeMenu();const{d,name,fn,json}=snapshot();toLib(d,name);download(fn,json);toast("Downloaded "+fn+".json",2200)};
+// saved characters list
+const closeLib=()=>$("#lib").hidden=true;
+function renderLib(){
+  const l=getLib(),box=$("#liblist"),names=Object.keys(l).sort((a,b)=>a.localeCompare(b));
+  box.innerHTML="";
+  if(!names.length){box.innerHTML='<p class="hint">No saved characters yet. Tap Save to add this one.</p>';return}
+  names.forEach(n=>{
+    const r=document.createElement("div");r.className="libr";
+    const b=document.createElement("button");b.className="btn";b.type="button";b.textContent=n;
+    b.onclick=()=>{apply(l[n]);save();closeLib();toast("Loaded "+n)};
+    const x=document.createElement("button");x.className="x";x.type="button";x.textContent="×";x.setAttribute("aria-label","Delete "+n);
+    let t;x.onclick=()=>{
+      if(x.classList.contains("arm")){clearTimeout(t);const c=getLib();delete c[n];try{localStorage.setItem(KLIB,JSON.stringify(c))}catch(e){}renderLib();return}
+      x.classList.add("arm");x.textContent="✓";toast("Tap ✓ again to delete "+n,2500);
+      t=setTimeout(()=>{x.classList.remove("arm");x.textContent="×"},2500);
+    };
+    r.append(b,x);box.appendChild(r);
+  });
+}
+$("#saved").onclick=()=>{closeMenu();renderLib();$("#lib").hidden=false};
+$("#libclose").onclick=closeLib;
+$("#lib").addEventListener("click",e=>{if(e.target.id==="lib")closeLib()});
+
+$("#load").onchange=e=>{
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{try{apply(JSON.parse(r.result));save();toast("Loaded "+file.name)}catch(x){alert("That file isn't a valid Shadowdark sheet JSON.")}};
+  r.readAsText(file);e.target.value="";
+};
+$("#copy").onclick=async()=>{closeMenu();
+  try{await navigator.clipboard.writeText(JSON.stringify(gather(),null,2));toast("JSON copied")}
+  catch(e){openModal("Copy your JSON",JSON.stringify(gather(),null,2),null,null,true)}
+};
+$("#paste").onclick=()=>{closeMenu();
+  openModal("Paste sheet JSON","","Load",()=>{
+    try{apply(JSON.parse($("#mtext").value));save();closeModal();toast("Sheet loaded")}catch(e){toast("Invalid JSON",2500)}
+  });
+};
+$("#print").onclick=()=>{closeMenu();window.print()};
+let clrT;
+$("#clear").onclick=()=>{
+  const b=$("#clear");
+  if(b.dataset.arm){clearTimeout(clrT);delete b.dataset.arm;b.textContent="New sheet";closeMenu();maxManual=false;apply(null);save();toast("New sheet");return}
+  b.dataset.arm=1;b.textContent="Tap again: erase all";
+  clrT=setTimeout(()=>{delete b.dataset.arm;b.textContent="New sheet"},3000);
+};
+
+// iOS Safari only applies :active styles when a touch listener exists, and may zoom the page on pinch
+document.addEventListener("touchstart",function(){},{passive:true});
+// ---------- hex map ----------
+const HS=30,SQ3=Math.sqrt(3);
+const DEF_LEGEND=()=>[
+  {name:"Forest",kind:"color",value:"#2e7d32"},{name:"Snow",kind:"color",value:"#f4f4f4"},
+  {name:"Grassland",kind:"color",value:"#d8c93c"},{name:"Swamp",kind:"color",value:"#7a5230"},
+  {name:"Water",kind:"color",value:"#2f6fd0"},{name:"Location",kind:"symbol",value:"X"},
+  {name:"Town",kind:"symbol",value:"T"},{name:"Cave",kind:"symbol",value:"C"},{name:"Ruins",kind:"symbol",value:"R"}];
+const MAP={legend:DEF_LEGEND(),hexes:{},view:{x:0,y:0,z:1},tool:"paint",sel:0};
+let undoStack=[],stroke=null,lastKey=null,lock=false,panning=null,pinch=null,W=0,H=0,mst;
+const cv=$("#mapc"),cx=cv.getContext("2d"),ptrs=new Map();
+const saveSoon=()=>{clearTimeout(mst);mst=setTimeout(save,300)};
+const lum=h=>{const n=parseInt(h.slice(1),16);return .299*(n>>16)+.587*((n>>8)&255)+.114*(n&255)};
+
+function setMap(m){
+  const ok=m&&Array.isArray(m.legend)&&m.hexes&&typeof m.hexes==="object";
+  MAP.legend=ok?m.legend.filter(e=>e&&(e.kind==="color"||e.kind==="symbol")).map(e=>({name:String(e.name||""),kind:e.kind,value:String(e.value||"")})):DEF_LEGEND();
+  MAP.hexes={};
+  if(ok)for(const k in m.hexes){
+    const h=m.hexes[k],o={};if(!h||!/^-?\d+,-?\d+$/.test(k))continue;
+    if(typeof h.c==="string"&&/^#[0-9a-f]{6}$/i.test(h.c))o.c=h.c;
+    if(typeof h.s==="string"&&h.s)o.s=h.s.slice(0,4);
+    if(o.c||o.s)MAP.hexes[k]=o;
+  }
+  const v=ok&&m.view;
+  MAP.view=v&&isFinite(v.x)&&isFinite(v.y)&&isFinite(v.z)?{x:+v.x,y:+v.y,z:Math.min(3,Math.max(.3,+v.z))}:{x:0,y:0,z:1};
+  MAP.sel=0;MAP.tool="paint";undoStack=[];setTool("paint");draw();
+}
+function setTool(t){
+  MAP.tool=t;
+  document.querySelectorAll("[data-tool]").forEach(b=>{const on=b.dataset.tool===t;b.classList.toggle("on",on);b.setAttribute("aria-pressed",String(on))});
+  cv.style.cursor=t==="pan"?"grab":t==="erase"?"cell":"crosshair";
+  renderLegend();mapStatus();
+}
+function mapStatus(){
+  const e=MAP.legend[MAP.sel];
+  $("#mstat").textContent=MAP.tool==="pan"?"Pan mode: drag to move the map.":MAP.tool==="erase"?"Erase mode: tap hexes to clear them.":
+    e?"Painting: "+(e.name||"unnamed")+(e.kind==="color"?" (colour)":" (symbol "+(e.value||"none")+")"):"Add a legend entry to paint.";
+}
+
+function renderLegend(){
+  const box=$("#legend");box.innerHTML="";
+  MAP.legend.forEach((e,i)=>{
+    const r=document.createElement("div");r.className="lg"+(MAP.tool==="paint"&&MAP.sel===i?" on":"");
+    const sw=document.createElement("button");sw.type="button";sw.className="sw";sw.setAttribute("aria-label","Use "+e.name);
+    const paintSw=()=>{if(e.kind==="color"){sw.style.background=e.value;sw.textContent=""}else{sw.style.background="#050505";sw.style.color="#fff";sw.textContent=e.value}};
+    paintSw();
+    sw.onclick=()=>{MAP.sel=i;setTool("paint")};
+    const nm=document.createElement("input");nm.className="nm";nm.placeholder="Name";nm.setAttribute("aria-label","Legend name");nm.value=e.name;
+    nm.oninput=()=>{e.name=nm.value;mapStatus();saveSoon()};
+    const kd=document.createElement("select");kd.setAttribute("aria-label","Legend type");
+    kd.innerHTML='<option value="color">Colour</option><option value="symbol">Symbol</option>';kd.value=e.kind;
+    kd.onchange=()=>{e.kind=kd.value;e.value=e.kind==="color"?"#888888":"";renderLegend();mapStatus();saveSoon()};
+    const val=document.createElement("input");val.className="val";
+    if(e.kind==="color"){val.type="color";val.value=/^#[0-9a-f]{6}$/i.test(e.value)?e.value:"#888888";val.setAttribute("aria-label","Colour")}
+    else{val.type="text";val.maxLength=2;val.placeholder="Symbol";val.value=e.value;val.setAttribute("aria-label","Symbol")}
+    val.oninput=()=>{e.value=val.value;paintSw();mapStatus();saveSoon()};
+    const x=document.createElement("button");x.type="button";x.className="x";x.textContent="×";x.setAttribute("aria-label","Delete legend entry");
+    let t;x.onclick=()=>{
+      if(x.classList.contains("arm")){clearTimeout(t);MAP.legend.splice(i,1);if(MAP.sel>=MAP.legend.length)MAP.sel=0;renderLegend();mapStatus();save();return}
+      x.classList.add("arm");x.textContent="✓";toast("Tap ✓ again to delete this legend entry",2500);
+      t=setTimeout(()=>{x.classList.remove("arm");x.textContent="×"},2500);
+    };
+    r.append(sw,nm,x,kd,val);box.appendChild(r);
+  });
+}
+$("#lgadd").onclick=()=>{MAP.legend.push({name:"New terrain",kind:"color",value:"#888888"});MAP.sel=MAP.legend.length-1;setTool("paint");save()};
+
+// geometry
+function hexAt(sx,sy){
+  const v=MAP.view,wx=(sx-W/2-v.x)/v.z,wy=(sy-H/2-v.y)/v.z;
+  const q=(SQ3/3*wx-wy/3)/HS,r=2/3*wy/HS;
+  let x=q,z=r,y=-x-z,rx=Math.round(x),ry=Math.round(y),rz=Math.round(z);
+  const dx=Math.abs(rx-x),dy=Math.abs(ry-y),dz=Math.abs(rz-z);
+  if(dx>dy&&dx>dz)rx=-ry-rz;else if(dy>dz)ry=-rx-rz;else rz=-rx-ry;
+  return[rx,rz];
+}
+function zoomAt(sx,sy,f){
+  const v=MAP.view,nz=Math.min(3,Math.max(.3,v.z*f)),wx=(sx-W/2-v.x)/v.z,wy=(sy-H/2-v.y)/v.z;
+  v.x=sx-W/2-wx*nz;v.y=sy-H/2-wy*nz;v.z=nz;draw();
+}
+function mapResize(){
+  const r=cv.getBoundingClientRect();if(!r.width)return;
+  const d=window.devicePixelRatio||1;W=r.width;H=r.height;
+  cv.width=Math.round(W*d);cv.height=Math.round(H*d);cx.setTransform(d,0,0,d,0,0);draw();
+}
+function draw(){
+  if(!W)return;
+  const v=MAP.view,z=v.z,s=HS*z;
+  cx.fillStyle="#080808";cx.fillRect(0,0,W,H);
+  const qa=[],ra=[];
+  [[0,0],[W,0],[0,H],[W,H]].forEach(([sx,sy])=>{const wx=(sx-W/2-v.x)/z,wy=(sy-H/2-v.y)/z;qa.push((SQ3/3*wx-wy/3)/HS);ra.push(2/3*wy/HS)});
+  const q0=Math.floor(Math.min(...qa))-2,q1=Math.ceil(Math.max(...qa))+2,r0=Math.floor(Math.min(...ra))-1,r1=Math.ceil(Math.max(...ra))+1;
+  cx.lineWidth=1;cx.textAlign="center";cx.textBaseline="middle";
+  cx.font='bold '+Math.round(s*.9)+'px "IM Fell English",Georgia,serif';
+  for(let r=r0;r<=r1;r++)for(let q=q0;q<=q1;q++){
+    const px=W/2+v.x+HS*(SQ3*q+SQ3/2*r)*z,py=H/2+v.y+HS*1.5*r*z;
+    if(px<-s*2||px>W+s*2||py<-s*2||py>H+s*2)continue;
+    cx.beginPath();
+    for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30),x=px+s*Math.cos(a),y=py+s*Math.sin(a);i?cx.lineTo(x,y):cx.moveTo(x,y)}
+    cx.closePath();
+    const h=MAP.hexes[q+","+r];
+    if(h&&h.c){cx.fillStyle=h.c;cx.fill();cx.strokeStyle="rgba(0,0,0,.55)"}else cx.strokeStyle="#2e2e2e";
+    cx.stroke();
+    if(h&&h.s&&s>=9){cx.fillStyle=h.c&&lum(h.c)>150?"#000":"#fff";cx.fillText(h.s,px,py+s*.04)}
+  }
+}
+
+// painting
+function applyAt(q,r){
+  const k=q+","+r,cur=MAP.hexes[k];let nx;
+  if(MAP.tool==="erase"){if(!cur)return;nx=null}
+  else{
+    const e=MAP.legend[MAP.sel];if(!e)return;
+    nx=cur?{...cur}:{};
+    if(e.kind==="color"){if(!/^#[0-9a-f]{6}$/i.test(e.value))return;nx.c=e.value}else{if(!e.value)return;nx.s=e.value}
+    if(cur&&cur.c===nx.c&&cur.s===nx.s)return;
+  }
+  if(!(k in stroke.ch))stroke.ch[k]=cur?{...cur}:null;
+  if(nx)MAP.hexes[k]=nx;else delete MAP.hexes[k];
+  draw();
+}
+function endStroke(){
+  if(stroke&&Object.keys(stroke.ch).length){undoStack.push(stroke.ch);if(undoStack.length>100)undoStack.shift();save()}
+  stroke=null;lastKey=null;
+}
+function paintPoint(sx,sy){
+  const[q,r]=hexAt(sx,sy),k=q+","+r;
+  if(k===lastKey)return;lastKey=k;applyAt(q,r);
+}
+const pos=e=>{const r=cv.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top]};
+const twoPts=()=>{const a=[...ptrs.values()];return{d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),mx:(a[0].x+a[1].x)/2,my:(a[0].y+a[1].y)/2}};
+
+cv.addEventListener("pointerdown",e=>{
+  const[x,y]=pos(e);try{cv.setPointerCapture(e.pointerId)}catch(_){}
+  ptrs.set(e.pointerId,{x,y});
+  if(ptrs.size===2){endStroke();panning=null;lock=true;pinch=twoPts();return}
+  if(ptrs.size>2||lock)return;
+  if(e.button===1||e.button===2||MAP.tool==="pan"){panning={sx:x,sy:y,vx:MAP.view.x,vy:MAP.view.y};cv.style.cursor="grabbing"}
+  else{stroke={ch:{}};paintPoint(x,y)}
+  e.preventDefault();
+});
+cv.addEventListener("pointermove",e=>{
+  if(!ptrs.has(e.pointerId))return;
+  const[x,y]=pos(e);ptrs.set(e.pointerId,{x,y});
+  if(ptrs.size===2&&pinch){
+    const n=twoPts();MAP.view.x+=n.mx-pinch.mx;MAP.view.y+=n.my-pinch.my;
+    if(pinch.d>0)zoomAt(n.mx,n.my,n.d/pinch.d);else draw();
+    pinch=n;return;
+  }
+  if(lock)return;
+  if(panning){MAP.view.x=panning.vx+x-panning.sx;MAP.view.y=panning.vy+y-panning.sy;draw()}
+  else if(stroke)paintPoint(x,y);
+});
+function up(e){
+  if(!ptrs.has(e.pointerId))return;
+  ptrs.delete(e.pointerId);
+  if(ptrs.size<2)pinch=null;
+  if(ptrs.size===0){
+    endStroke();
+    if(panning||lock){panning=null;lock=false;save()}
+    cv.style.cursor=MAP.tool==="pan"?"grab":MAP.tool==="erase"?"cell":"crosshair";
+  }
+}
+cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",up);
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+["gesturestart","gesturechange","gestureend"].forEach(n=>cv.addEventListener(n,e=>e.preventDefault()));
+cv.addEventListener("wheel",e=>{e.preventDefault();const[x,y]=pos(e);zoomAt(x,y,e.deltaY<0?1.1:1/1.1);saveSoon()},{passive:false});
+
+document.querySelectorAll("[data-tool]").forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+$("#mundo").onclick=()=>{
+  const ch=undoStack.pop();if(!ch){toast("Nothing to undo");return}
+  for(const k in ch){if(ch[k])MAP.hexes[k]=ch[k];else delete MAP.hexes[k]}
+  draw();save();
+};
+$("#mzin").onclick=()=>{zoomAt(W/2,H/2,1.25);saveSoon()};
+$("#mzout").onclick=()=>{zoomAt(W/2,H/2,1/1.25);saveSoon()};
+$("#mhome").onclick=()=>{MAP.view={x:0,y:0,z:1};draw();saveSoon()};
+if(window.ResizeObserver)new ResizeObserver(mapResize).observe(cv);
+window.addEventListener("resize",mapResize);
+
+window.addEventListener("resize",fitAll);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitAll);
+let start=null;
+try{start=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+apply(start);
+window.__sheetReady=true;
+</script>
+</body>
+</html>
